@@ -1,10 +1,10 @@
 from typing import Dict, List, Optional, Tuple
 import uuid
 from models.models import Document, DocumentChunk, DocumentChunkMetadata
-
 import tiktoken
 
 from services.openai import get_embeddings
+from services.embeddings import store_embeddings
 
 # Global variables
 tokenizer = tiktoken.get_encoding(
@@ -12,12 +12,11 @@ tokenizer = tiktoken.get_encoding(
 )  # The encoding scheme to use for tokenization
 
 # Constants
-CHUNK_SIZE = 200  # The target size of each text chunk in tokens
+CHUNK_SIZE = 400  # The target size of each text chunk in tokens
 MIN_CHUNK_SIZE_CHARS = 350  # The minimum size of each text chunk in characters
 MIN_CHUNK_LENGTH_TO_EMBED = 5  # Discard chunks shorter than this
 EMBEDDINGS_BATCH_SIZE = 128  # The number of embeddings to request at a time
 MAX_NUM_CHUNKS = 10000  # The maximum number of chunks to generate from a text
-
 
 def get_text_chunks(text: str, chunk_token_size: Optional[int]) -> List[str]:
     """
@@ -117,8 +116,10 @@ def create_document_chunks(
     # Generate a document id if not provided
     doc_id = doc.id or str(uuid.uuid4())
 
-    # Split the document text into chunks
-    text_chunks = get_text_chunks(doc.text, chunk_token_size)
+    # Propio: Se ignora la división de chunks, se envía todo el texto como un solo chunk
+
+    # text_chunks = get_text_chunks(doc.text, chunk_token_size)
+    text_chunks = [doc.text]
 
     metadata = (
         DocumentChunkMetadata(**doc.metadata.__dict__)
@@ -144,7 +145,6 @@ def create_document_chunks(
 
     # Return the list of chunks and the document id
     return doc_chunks, doc_id
-
 
 def get_document_chunks(
     documents: List[Document], chunk_token_size: Optional[int]
@@ -198,5 +198,7 @@ def get_document_chunks(
     for i, chunk in enumerate(all_chunks):
         # Assign the embedding from the embeddings list to the chunk object
         chunk.embedding = embeddings[i]
-
+    
+    store_embeddings(all_chunks)
+  
     return chunks

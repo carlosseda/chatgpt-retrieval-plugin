@@ -3,8 +3,9 @@ info:
   title: Retrieval Plugin API
   description: A retrieval API for querying and filtering documents based on natural language queries and metadata
   version: 1.0.0
-  servers:
-    - url: https://your-app-url.com
+servers:
+  - url: /sub
+  - url: https://your-app-url.com
 paths:
   /query:
     post:
@@ -15,21 +16,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/QueryRequest"
+              $ref: '#/components/schemas/QueryRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QueryResponse"
-        "422":
+                $ref: '#/components/schemas/QueryResponse'
+        '422':
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HTTPValidationError"
+                $ref: '#/components/schemas/HTTPValidationError'
       security:
         - HTTPBearer: []
 components:
@@ -39,7 +40,7 @@ components:
       type: object
       properties:
         source:
-          $ref: "#/components/schemas/Source"
+          $ref: '#/components/schemas/Source'
         source_id:
           title: Source Id
           type: string
@@ -51,6 +52,21 @@ components:
           type: string
         author:
           title: Author
+          type: string
+        numero:
+          title: Numero
+          type: string
+        pagina:
+          title: Pagina
+          type: string
+        seccion:
+          title: Seccion
+          type: string
+        fasciculo:
+          title: Fasciculo
+          type: string
+        idioma:
+          title: Idioma
           type: string
         document_id:
           title: Document Id
@@ -70,7 +86,7 @@ components:
           title: Text
           type: string
         metadata:
-          $ref: "#/components/schemas/DocumentChunkMetadata"
+          $ref: '#/components/schemas/DocumentChunkMetadata'
         embedding:
           title: Embedding
           type: array
@@ -87,7 +103,7 @@ components:
           title: Document Id
           type: string
         source:
-          $ref: "#/components/schemas/Source"
+          $ref: '#/components/schemas/Source'
         source_id:
           title: Source Id
           type: string
@@ -100,6 +116,21 @@ components:
         end_date:
           title: End Date
           type: string
+        numero:
+          title: Numero
+          type: string
+        pagina:
+          title: Pagina
+          type: string
+        seccion:
+          title: Seccion
+          type: string
+        fasciculo:
+          title: Fasciculo
+          type: string
+        idioma:
+          title: Idioma
+          type: string
     HTTPValidationError:
       title: HTTPValidationError
       type: object
@@ -108,7 +139,7 @@ components:
           title: Detail
           type: array
           items:
-            $ref: "#/components/schemas/ValidationError"
+            $ref: '#/components/schemas/ValidationError'
     Query:
       title: Query
       required:
@@ -119,7 +150,7 @@ components:
           title: Query
           type: string
         filter:
-          $ref: "#/components/schemas/DocumentMetadataFilter"
+          $ref: '#/components/schemas/DocumentMetadataFilter'
         top_k:
           title: Top K
           type: integer
@@ -134,7 +165,7 @@ components:
           title: Queries
           type: array
           items:
-            $ref: "#/components/schemas/Query"
+            $ref: '#/components/schemas/Query'
     QueryResponse:
       title: QueryResponse
       required:
@@ -145,7 +176,7 @@ components:
           title: Results
           type: array
           items:
-            $ref: "#/components/schemas/QueryResult"
+            $ref: '#/components/schemas/QueryResult'
     QueryResult:
       title: QueryResult
       required:
@@ -160,7 +191,7 @@ components:
           title: Results
           type: array
           items:
-            $ref: "#/components/schemas/DocumentChunkWithScore"
+            $ref: '#/components/schemas/DocumentChunkWithScore'
     Source:
       title: Source
       enum:
