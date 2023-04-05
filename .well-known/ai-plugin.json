@@ -2,7 +2,7 @@
   "schema_version": "v1",
   "name_for_model": "boib",
   "name_for_human": "Boib Plugin",
-  "description_for_model": "Plugin for searching through BOIB documents. Do not use this tool if the user did not ask about the BOIB",
+  "description_for_model": "Plugin for searching through BOIB documents. Do not use this tool if the user did not ask about the BOIB, include url always in the response.",
   "description_for_human": "Busca en todas las publicaciones del BOIB.",
   "auth": {
     "type": "user_http",
