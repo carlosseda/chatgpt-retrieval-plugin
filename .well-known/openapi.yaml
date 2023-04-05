@@ -1,11 +1,11 @@
 openapi: 3.0.2
 info:
-  title: Retrieval Plugin API
-  description: A retrieval API for querying and filtering documents based on natural language queries and metadata
+  title: BOIB Plugin API
+  description: Busca en todas las publicaciones del BOIB.
   version: 1.0.0
 servers:
   - url: /sub
-  - url: https://your-app-url.com
+  - url: https://orca-app-yh8es.ondigitalocean.app
 paths:
   /query:
     post:
