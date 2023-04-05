@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict, List, Optional
 import pinecone
+import json
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 import asyncio
 
@@ -15,6 +16,8 @@ from models.models import (
     Source,
 )
 from services.date import to_unix_timestamp
+from services.openai import get_chat_completion
+
 
 # Read environment variables for Pinecone configuration
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
@@ -117,10 +120,24 @@ class PineconeDataStore(DataStore):
 
         # Define a helper coroutine that performs a single query and returns a QueryResult
         async def _single_query(query: QueryWithEmbedding) -> QueryResult:
-            print(f"Query: {query.query}")
+            # print(f"Query: {query.query}")
+
+            message = [
+                {"role": "user", "content": "Responde solo con un json, a falta de datos devuelve un año entero, si no hay fechas el valor de las claves que sea null {'start_date':'aaaa-mm-dd', 'end_date':'aaaa-mm-dd'}: " + query.query},
+            ]
+
+            completion = get_chat_completion(
+                message, "gpt-3.5-turbo"
+            )
+
+            try:
+                dates = json.loads(completion)
+            except:
+                print("Error parsing dates")
+                dates = {}
 
             # Convert the metadata filter object to a dict with pinecone filter expressions
-            pinecone_filter = self._get_pinecone_filter(query.filter)
+            pinecone_filter = self._get_pinecone_filter(query.filter, dates)
 
             try:
                 # Query the index with the query embedding, filter, and top_k
@@ -131,6 +148,7 @@ class PineconeDataStore(DataStore):
                     filter=pinecone_filter,
                     include_metadata=True,
                 )
+
             except Exception as e:
                 print(f"Error querying index: {e}")
                 raise e
@@ -218,8 +236,8 @@ class PineconeDataStore(DataStore):
         return True
 
     def _get_pinecone_filter(
-        self, filter: Optional[DocumentMetadataFilter] = None
-    ) -> Dict[str, Any]:
+        self, filter: Optional[DocumentMetadataFilter] = None, dates = None
+            ) -> Dict[str, Any]:
         if filter is None:
             return {}
 
@@ -228,17 +246,29 @@ class PineconeDataStore(DataStore):
         # For each field in the MetadataFilter, check if it has a value and add the corresponding pinecone filter expression
         # For start_date and end_date, uses the $gte and $lte operators respectively
         # For other fields, uses the $eq operator
+
         for field, value in filter.dict().items():
             if value is not None:
                 if field == "start_date":
-                    pinecone_filter["date"] = pinecone_filter.get("date", {})
-                    pinecone_filter["date"]["$gte"] = to_unix_timestamp(value)
+                    pinecone_filter["created_at"] = pinecone_filter.get("created_at", {})
+                    pinecone_filter["created_at"]["$gte"] = to_unix_timestamp(value)
                 elif field == "end_date":
-                    pinecone_filter["date"] = pinecone_filter.get("date", {})
-                    pinecone_filter["date"]["$lte"] = to_unix_timestamp(value)
+                    pinecone_filter["created_at"] = pinecone_filter.get("created_at", {})
+                    pinecone_filter["created_at"]["$lte"] = to_unix_timestamp(value)
                 else:
                     pinecone_filter[field] = value
 
+        #Propio, fechas de la query si las hubiera
+        if  dates["start_date"] is not None:
+            pinecone_filter["created_at"] = pinecone_filter.get("created_at", {})
+            pinecone_filter["created_at"]["$gte"] = to_unix_timestamp(dates["start_date"])
+
+        if dates["end_date"] is not None:
+            pinecone_filter["created_at"] = pinecone_filter.get("created_at", {})
+            pinecone_filter["created_at"]["$lte"] = to_unix_timestamp(dates["end_date"])
+        
+
+        print (pinecone_filter)
         return pinecone_filter
 
     def _get_pinecone_metadata(
@@ -259,3 +289,24 @@ class PineconeDataStore(DataStore):
                     pinecone_metadata[field] = value
 
         return pinecone_metadata
+
+    async def _get_dates_from_query(
+        query: str,
+        model="gpt-3.5-turbo"
+    ):
+
+        print(query)
+        message = [
+            {"role": "user", "content": "Extrae del siguiente texto, si no esta la informacion devuelve null {'start_date':'aaaa-mm-dd', 'end_date':'aaaa-mm-dd'}: " + query},
+        ]
+
+        completion = get_chat_completion(
+            message, model
+        )
+
+        try:
+            dates = json.loads(completion)
+        except:
+            dates = {}
+
+        return dates
